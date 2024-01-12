@@ -33,11 +33,12 @@ export const sendEmail = functions.auth.user().onCreate((user) =>{
     const msg ={
       to: email,
       from: "steven@joineven.io",
-      templateId: "d-d13743cc0992434d837facc26ce01ce2",
+      templateId: "d-23d9069634bd45c5999a2c909c0cd77f",
       dynamicTemplateData: {
         name: firstName,
       },
     };
+    logger.log("is this happening?", email);
     sgMail
         .send(msg)
         .then((response) => {
@@ -53,24 +54,34 @@ export const sendEmail = functions.auth.user().onCreate((user) =>{
 export const sendNotificationEmail =
   functions.firestore
       .document("users/{userId}/notifications/{notificationId}")
-      .onCreate((event) => {
-        // If we set `/users/marie/incoming_messages/134` to {body: "Hello"}
-        // event.params.userId == "marie";
-        // event.params.notificationId == "134";
-        // ... and ...
-        // event.data.after.data() == {body: "Hello"}
+      .onCreate((notification, event) => {
+        // ID of newly created document
         const userId = event.params.userId;
+        // Retrieve value from notification data
+        const {body, title, link} = notification.data();
+
+        const buttonHash = {
+          ["Candidate has Applied on Website"]: "View their profile!",
+          ["New Candidate Interest"]: "View their profile!",
+          ["Mutual Interest Received"]: "Reach out to this candidate!",
+          ["Interest Rejected"]: "Keep looking",
+          ["Recruiter Has Withdrawn Their Interest"]: "Find the right fit",
+        };
+
         return admin
-            .firestore().collection("users").doc(userId).get().then((doc)=>{
-              const userInfo = doc.data();
-              const {email, firstName} = userInfo;
-              logger.log(email);
+            .firestore().collection("users").doc(userId).get().then((user)=>{
+              const {email, firstName} = user.data();
               const msg ={
                 to: email,
                 from: "steven@joineven.io",
-                templateId: "d-d13743cc0992434d837facc26ce01ce2",
+                templateId: "d-bb636e69a03841b8bf0858fcd4b1cc53",
                 dynamicTemplateData: {
-                  name: `${firstName} notification email test`,
+                  name: firstName,
+                  subject: title,
+                  body,
+                  preheader: body,
+                  link,
+                  button: buttonHash[title],
                 },
               };
               sgMail
