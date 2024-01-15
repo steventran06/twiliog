@@ -30,6 +30,7 @@ export const sendEmail = functions.auth.user().onCreate((user) =>{
     const userInfo = doc.data();
     const {email, firstName} = userInfo;
     logger.log(email);
+
     const msg ={
       to: email,
       from: "steven@joineven.io",
@@ -38,7 +39,10 @@ export const sendEmail = functions.auth.user().onCreate((user) =>{
         name: firstName,
       },
     };
-    logger.log("is this happening?", email);
+
+    if (user.type === "recruiter") {
+      msg.templateId = "d-06e7b7cfae3c4d838f558c24e5023058";
+    }
     sgMail
         .send(msg)
         .then((response) => {
@@ -64,8 +68,9 @@ export const sendNotificationEmail =
           ["Candidate has Applied on Website"]: "View their profile!",
           ["New Candidate Interest"]: "View their profile!",
           ["Mutual Interest Received"]: "Reach out to this candidate!",
-          ["Interest Rejected"]: "Keep looking",
-          ["Recruiter Has Withdrawn Their Interest"]: "Find the right fit",
+          ["Interest Rejected"]: "Manage your job queue",
+          ["Recruiter Has Withdrawn Their Interest"]: "Manage your job queue",
+          ["A Company Has Expressed Interest in You"]: "Manage your job queue",
         };
 
         return admin
