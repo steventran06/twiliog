@@ -28,7 +28,7 @@ sgMail.setApiKey(functions.config().sendgrid.key);
 export const sendEmail = functions.auth.user().onCreate((user) =>{
   return admin.firestore().collection("users").doc(user.uid).get().then((doc)=>{
     const userInfo = doc.data();
-    const {email, firstName} = userInfo;
+    const {email, firstName, type} = userInfo;
     logger.log(email);
 
     const msg ={
@@ -40,7 +40,7 @@ export const sendEmail = functions.auth.user().onCreate((user) =>{
       },
     };
 
-    if (user.type === "recruiter") {
+    if (type === "recruiter") {
       msg.templateId = "d-06e7b7cfae3c4d838f558c24e5023058";
     }
     sgMail
