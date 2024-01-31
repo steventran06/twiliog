@@ -28,24 +28,42 @@ sgMail.setApiKey(functions.config().sendgrid.key);
 export const sendEmail = functions.auth.user().onCreate((user) =>{
   return admin.firestore().collection("users").doc(user.uid).get().then((doc)=>{
     const userInfo = doc.data();
-    const {email, firstName, type} = userInfo;
+    const {email, firstName, lastName, type} = userInfo;
     logger.log(email);
 
-    const msg ={
+    const userSignupEmail = {
       to: email,
       from: "steven@joineven.io",
-      templateId: "d-23d9069634bd45c5999a2c909c0cd77f",
+      templateId: type === "recruiter" ?
+        "d-06e7b7cfae3c4d838f558c24e5023058" :
+        "d-23d9069634bd45c5999a2c909c0cd77f",
       dynamicTemplateData: {
         name: firstName,
       },
     };
 
-    if (type === "recruiter") {
-      msg.templateId = "d-06e7b7cfae3c4d838f558c24e5023058";
-    }
+    const newCandidateEmail = {
+      to: "team@joineven.io",
+      from: "steven@joineven.io",
+      templateId: "d-ab48cb8e46e44974980a306cce24331b",
+      dynamicTemplateData: {
+        name: `${firstName} ${lastName}`,
+      },
+    };
+
     sgMail
-        .send(msg)
+        .send(userSignupEmail)
         .then((response) => {
+          // Send an email with candidate name to
+          // Team Even when new candidates sign up
+          if (type === "candidate") {
+            sgMail
+                .send(newCandidateEmail)
+                .then((response) => {
+                  logger.log(response[0].statusCode);
+                  logger.log(response[0].headers);
+                });
+          }
           logger.log(response[0].statusCode);
           logger.log(response[0].headers);
         })
