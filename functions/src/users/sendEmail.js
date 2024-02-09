@@ -89,6 +89,7 @@ export const sendNotificationEmail =
           ["Interest Rejected"]: "Manage your job queue",
           ["Recruiter Has Withdrawn Their Interest"]: "Manage your job queue",
           ["A Company Has Expressed Interest in You"]: "Manage your job queue",
+          ["Job Reported Closed"]: "Check your position status",
         };
 
         return admin
