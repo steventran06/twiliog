@@ -1,6 +1,7 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const logger = require("firebase-functions/logger");
+// const {onSchedule} = require("firebase-functions/v2/scheduler");
 const sgMail = require("@sendgrid/mail");
 
 const {
@@ -24,6 +25,28 @@ const firebaseConfig = {
 
 admin.initializeApp(firebaseConfig);
 sgMail.setApiKey(functions.config().sendgrid.key);
+
+export const scheduleTest =
+  functions
+      .pubsub
+      .schedule("every 5 minutes")
+      .onRun((context) => {
+        const newCandidateEmail = {
+          to: "steven@joineven.io",
+          from: "steven@joineven.io",
+          templateId: "d-ab48cb8e46e44974980a306cce24331b",
+          dynamicTemplateData: {
+            name: "SCHEDULER TEST",
+          },
+        };
+
+        sgMail
+            .send(newCandidateEmail)
+            .then((response) => {
+              logger.log(response[0].statusCode);
+              logger.log(response[0].headers);
+            });
+      });
 
 export const sendEmail = functions.auth.user().onCreate((user) =>{
   return admin.firestore().collection("users").doc(user.uid).get().then((doc)=>{
@@ -90,6 +113,7 @@ export const sendNotificationEmail =
           ["Recruiter Has Withdrawn Their Interest"]: "Manage your job queue",
           ["A Company Has Expressed Interest in You"]: "Manage your job queue",
           ["Job Reported Closed"]: "Check your position status",
+          ["Job Post Has Been Removed"]: "Manage your job queue",
         };
 
         return admin
@@ -105,7 +129,7 @@ export const sendNotificationEmail =
                   body,
                   preheader: body,
                   link,
-                  button: buttonHash[title],
+                  button: buttonHash[title] || "Back to Even",
                 },
               };
               sgMail
